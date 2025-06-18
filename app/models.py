@@ -1,4 +1,5 @@
-from app import db  # ✅ Import from the correct app context
+# app/models.py
+from .extensions import db
 
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -14,12 +15,6 @@ class Expense(db.Model):
             "paid_by": self.paid_by
         }
 
-    def __repr__(self):
-        return f"<Expense {self.id}: {self.description}, ₹{self.amount}>"
-
 class Person(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-
-    def __repr__(self):
-        return f"<Person {self.id}: {self.name}>"
