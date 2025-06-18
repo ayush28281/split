@@ -4,6 +4,11 @@ from database import db  # adjust based on your project layout
 
 api = Blueprint("api", __name__)
 
+# ✅ Add this root route
+@api.route("/", methods=["GET"])
+def index():
+    return {"message": "Split App is Live"}, 200
+
 @api.route("/expenses", methods=["POST"])
 def add_expense():
     data = request.get_json()
