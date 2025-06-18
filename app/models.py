@@ -6,13 +6,17 @@ class Expense(db.Model):
     amount = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(200), nullable=False)
     paid_by = db.Column(db.String(100), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=True)
+    split_between = db.Column(db.ARRAY(db.String), nullable=True)  # PostgreSQL specific
 
     def to_dict(self):
         return {
             "id": self.id,
             "amount": self.amount,
             "description": self.description,
-            "paid_by": self.paid_by
+            "paid_by": self.paid_by,
+            "group_id": self.group_id,
+            "split_between": self.split_between
         }
 
 class Person(db.Model):
