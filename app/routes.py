@@ -1,6 +1,7 @@
 from flask import request, jsonify, Blueprint
 from .models import Person, Expense
-from database import db  # adjust based on your project layout
+from .extensions import db
+ # adjust based on your project layout
 
 api = Blueprint("api", __name__)
 
