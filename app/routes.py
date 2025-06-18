@@ -1,9 +1,10 @@
-### routes.py
-from flask import request, jsonify
-from app import app, db
+from flask import request, jsonify, Blueprint
 from models import Person, Expense
+from database import db  # adjust based on your project layout
 
-@app.route("/expenses", methods=["POST"])
+api = Blueprint("api", __name__)
+
+@api.route("/expenses", methods=["POST"])
 def add_expense():
     data = request.get_json()
     amount = data.get("amount")
@@ -23,20 +24,18 @@ def add_expense():
     db.session.commit()
     return jsonify({"success": True, "data": {"id": expense.id}, "message": "Expense added successfully"}), 201
 
-@app.route("/expenses", methods=["GET"])
+@api.route("/expenses", methods=["GET"])
 def get_expenses():
     expenses = Expense.query.all()
-    data = [
-        {
-            "id": e.id,
-            "description": e.description,
-            "amount": e.amount,
-            "paid_by": e.paid_by
-        } for e in expenses
-    ]
-    return jsonify(data)
+    return jsonify({
+        "success": True,
+        "data": [e.to_dict() for e in expenses]
+    })
 
-@app.route("/people", methods=["GET"])
+@api.route("/people", methods=["GET"])
 def get_people():
     people = Person.query.all()
-    return jsonify([{"id": p.id, "name": p.name} for p in people])
+    return jsonify({
+        "success": True,
+        "data": [{"id": p.id, "name": p.name} for p in people]
+    })
