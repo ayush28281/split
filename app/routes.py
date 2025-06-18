@@ -1,15 +1,14 @@
 from flask import request, jsonify, Blueprint
-from .models import Person, Expense
+from .models import Person, Expense, Group
 from .extensions import db
- # adjust based on your project layout
 
 api = Blueprint("api", __name__)
 
-# ✅ Add this root route
 @api.route("/", methods=["GET"])
 def index():
     return {"message": "Split App is Live"}, 200
 
+# ---------------------- EXPENSES ----------------------
 @api.route("/expenses", methods=["POST"])
 def add_expense():
     data = request.get_json()
@@ -38,6 +37,7 @@ def get_expenses():
         "data": [e.to_dict() for e in expenses]
     })
 
+# ---------------------- PEOPLE ----------------------
 @api.route("/people", methods=["GET"])
 def get_people():
     people = Person.query.all()
@@ -45,3 +45,57 @@ def get_people():
         "success": True,
         "data": [{"id": p.id, "name": p.name} for p in people]
     })
+
+# ---------------------- GROUPS ----------------------
+@api.route("/groups", methods=["POST"])
+def create_group():
+    data = request.get_json()
+    name = data.get("name")
+
+    if not name:
+        return jsonify({"success": False, "message": "Group name is required"}), 400
+
+    if Group.query.filter_by(name=name).first():
+        return jsonify({"success": False, "message": "Group already exists"}), 409
+
+    group = Group(name=name)
+    db.session.add(group)
+    db.session.commit()
+
+    return jsonify({"success": True, "data": {"id": group.id, "name": group.name}}), 201
+
+@api.route("/groups", methods=["GET"])
+def list_groups():
+    groups = Group.query.all()
+    return jsonify({
+        "success": True,
+        "data": [{"id": g.id, "name": g.name} for g in groups]
+    })
+
+# ---------------------- SETTLEMENTS ----------------------
+@api.route("/settlements", methods=["GET"])
+def get_settlements():
+    people = Person.query.all()
+    expenses = Expense.query.all()
+
+    if not people or not expenses:
+        return jsonify({"success": True, "data": [], "message": "No data to calculate settlements."})
+
+    total_expense = sum(e.amount for e in expenses)
+    per_person = total_expense / len(people)
+    
+    paid = {p.name: 0 for p in people}
+    for e in expenses:
+        paid[e.paid_by] += e.amount
+
+    settlements = []
+    for p in people:
+        balance = round(paid[p.name] - per_person, 2)
+        settlements.append({
+            "name": p.name,
+            "paid": round(paid[p.name], 2),
+            "should_have_paid": round(per_person, 2),
+            "balance": balance
+        })
+
+    return jsonify({"success": True, "data": settlements})
